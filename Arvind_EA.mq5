@@ -1,3 +1,8 @@
+#include <Trade\Trade.mqh>
+
+// Declare the trade object
+CTrade trade;
+
 //+------------------------------------------------------------------+
 //| Enumeration for Stop-Loss Calculation                           |
 //+------------------------------------------------------------------+
@@ -8,7 +13,7 @@ enum StopLossType
 };
 
 //+------------------------------------------------------------------+
-//| Expert Advisor Parameters                                                |
+//| Expert parameters                                                |
 //+------------------------------------------------------------------+
 input int StopLossCandleIndex = 1;       // 1: Immediate previous candle, 2: Two candles back
 input StopLossType StopLossOption = HighPrice; // Stop-loss calculation type (dropdown)
@@ -38,6 +43,33 @@ int OnInit()
 }
 
 //+------------------------------------------------------------------+
+//| Tick function                                                    |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Required for the EA to function. Add any periodic logic here if needed.
+}
+
+//+------------------------------------------------------------------+
+//| Chart events function                                            |
+//+------------------------------------------------------------------+
+void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
+{
+    // Check for button clicks
+    if (id == CHARTEVENT_OBJECT_CLICK)
+    {
+        if (sparam == "StartButton")
+        {
+            StartTrade(); // Start the trading strategy
+        }
+        else if (sparam == "CloseAllButton")
+        {
+            CloseAllPositions(); // Close all positions for the current symbol
+        }
+    }
+}
+
+//+------------------------------------------------------------------+
 //| Function to display EA settings on the chart                    |
 //+------------------------------------------------------------------+
 void DisplaySettings()
@@ -60,25 +92,6 @@ void DisplaySettings()
     ObjectSetInteger(0, settingsLabel, OBJPROP_COLOR, clrWhite);
     ObjectSetInteger(0, settingsLabel, OBJPROP_FONTSIZE, 12);
     ObjectSetString(0, settingsLabel, OBJPROP_FONT, "Arial");
-}
-
-//+------------------------------------------------------------------+
-//| Chart events function                                            |
-//+------------------------------------------------------------------+
-void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
-{
-    // Check for button clicks
-    if (id == CHARTEVENT_OBJECT_CLICK)
-    {
-        if (sparam == "StartButton")
-        {
-            StartTrade(); // Start the trading strategy
-        }
-        else if (sparam == "CloseAllButton")
-        {
-            CloseAllPositions(); // Close all positions for the current symbol
-        }
-    }
 }
 
 //+------------------------------------------------------------------+
@@ -106,33 +119,7 @@ void StartTrade()
     entryPrice = SymbolInfoDouble(Symbol(), SYMBOL_BID);
 
     // Place initial sell trade
-    int ticket = OrderSend(Symbol(), OP_SELL, 0.1, entryPrice, 3, stopLoss, 0, "Initial Sell", 0, 0, clrRed);
-
-    // Handle additional trades
-    ManageTrades(entryPrice, stopLoss);
-}
-
-//+------------------------------------------------------------------+
-//| Manage Additional Trades                                         |
-//+------------------------------------------------------------------+
-void ManageTrades(double entryPrice, double stopLoss)
-{
-    while (true)
-    {
-        double currentPrice = SymbolInfoDouble(Symbol(), SYMBOL_BID);
-
-        if (currentPrice >= stopLoss)
-        {
-            CloseAllPositions(); // Close all trades when SL is hit
-            break;
-        }
-
-        if (currentPrice >= (entryPrice + (stopLoss - entryPrice - 2 * Point())))
-        {
-            // Place additional sell trade
-            OrderSend(Symbol(), OP_SELL, 0.1, currentPrice, 3, stopLoss, 0, "Additional Sell", 0, 0, clrRed);
-        }
-    }
+    trade.Sell(0.1, Symbol(), entryPrice, stopLoss, 0, "Initial Sell");
 }
 
 //+------------------------------------------------------------------+
@@ -140,11 +127,12 @@ void ManageTrades(double entryPrice, double stopLoss)
 //+------------------------------------------------------------------+
 void CloseAllPositions()
 {
-    for (int i = OrdersTotal() - 1; i >= 0; i--)
+    // Close all positions for the current symbol
+    for (int i = PositionsTotal() - 1; i >= 0; i--)
     {
-        if (OrderSelect(i, SELECT_BY_POS) && OrderSymbol() == Symbol())
+        if (PositionSelect(Symbol()))
         {
-            OrderClose(OrderTicket(), OrderLots(), SymbolInfoDouble(Symbol(), SYMBOL_ASK), 3, clrBlue);
+            trade.PositionClose(Symbol());
         }
     }
 }
