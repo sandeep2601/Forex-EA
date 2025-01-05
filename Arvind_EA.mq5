@@ -26,14 +26,20 @@ int OnInit()
     // Create buttons for user actions
     ObjectCreate(0, "StartButton", OBJ_BUTTON, 0, 0, 0);
     ObjectSetInteger(0, "StartButton", OBJPROP_CORNER, 0);
-    ObjectSetInteger(0, "StartButton", OBJPROP_XDISTANCE, 10);
-    ObjectSetInteger(0, "StartButton", OBJPROP_YDISTANCE, 10);
+    ObjectSetInteger(0, "StartButton", OBJPROP_XDISTANCE, 20);
+    ObjectSetInteger(0, "StartButton", OBJPROP_YDISTANCE, 30);
+    ObjectSetInteger(0, "StartButton", OBJPROP_XSIZE, 100);  // Set button width (default is 50)
+    ObjectSetInteger(0, "StartButton", OBJPROP_YSIZE, 30);  // Set button height (default is 15)
+    ObjectSetInteger(0, "StartButton", OBJPROP_BGCOLOR, clrWhite); // Button background color
+    ObjectSetInteger(0, "StartButton", OBJPROP_COLOR, clrRoyalBlue); // Text color
     ObjectSetString(0, "StartButton", OBJPROP_TEXT, "Start Trade");
 
     ObjectCreate(0, "CloseAllButton", OBJ_BUTTON, 0, 0, 0);
     ObjectSetInteger(0, "CloseAllButton", OBJPROP_CORNER, 0);
-    ObjectSetInteger(0, "CloseAllButton", OBJPROP_XDISTANCE, 10);
-    ObjectSetInteger(0, "CloseAllButton", OBJPROP_YDISTANCE, 50);
+    ObjectSetInteger(0, "CloseAllButton", OBJPROP_XDISTANCE, 150);
+    ObjectSetInteger(0, "CloseAllButton", OBJPROP_YDISTANCE, 30);
+    ObjectSetInteger(0, "CloseAllButton", OBJPROP_XSIZE, 150);  // Set button width (default is 50)
+    ObjectSetInteger(0, "CloseAllButton", OBJPROP_YSIZE, 30);  // Set button height (default is 15)
     ObjectSetString(0, "CloseAllButton", OBJPROP_TEXT, "Close All Positions");
 
     // Display settings on the chart
@@ -80,18 +86,24 @@ void DisplaySettings()
     string stopLossOptionInfo = StringFormat("Stop-Loss Type: %s", 
                               StopLossOption == HighPrice ? "High Price" : "Open Price");
 
-    // Combine all settings into one text
-    string settingsText = stopLossCandleInfo + "\n" + stopLossOptionInfo;
-
-    // Create a label object to display the settings
-    ObjectCreate(0, settingsLabel, OBJ_LABEL, 0, 0, 0);
-    ObjectSetInteger(0, settingsLabel, OBJPROP_CORNER, 0);
-    ObjectSetInteger(0, settingsLabel, OBJPROP_XDISTANCE, 200);
-    ObjectSetInteger(0, settingsLabel, OBJPROP_YDISTANCE, 10);
-    ObjectSetString(0, settingsLabel, OBJPROP_TEXT, settingsText);
-    ObjectSetInteger(0, settingsLabel, OBJPROP_COLOR, clrWhite);
-    ObjectSetInteger(0, settingsLabel, OBJPROP_FONTSIZE, 12);
-    ObjectSetString(0, settingsLabel, OBJPROP_FONT, "Arial");
+    // Create a label for each setting on the chart
+    ObjectCreate(0, "StopLossCandleLabel", OBJ_LABEL, 0, 0, 0);
+    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_CORNER, 0);
+    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_XDISTANCE, 20);
+    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_YDISTANCE, 70);
+    ObjectSetString(0, "StopLossCandleLabel", OBJPROP_TEXT, stopLossCandleInfo);
+    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_COLOR, clrDarkRed);
+    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_FONTSIZE, 10);
+    ObjectSetString(0, "StopLossCandleLabel", OBJPROP_FONT, "Arial");
+    
+    ObjectCreate(0, "StopLossOptionLabel", OBJ_LABEL, 0, 0, 0);
+    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_CORNER, 0);
+    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_XDISTANCE, 20);
+    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_YDISTANCE, 90); // Position below the previous label
+    ObjectSetString(0, "StopLossOptionLabel", OBJPROP_TEXT, stopLossOptionInfo);
+    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_COLOR, clrDarkRed);
+    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_FONTSIZE, 10);
+    ObjectSetString(0, "StopLossOptionLabel", OBJPROP_FONT, "Arial");
 }
 
 //+------------------------------------------------------------------+
