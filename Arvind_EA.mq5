@@ -1,5 +1,17 @@
 #include <Trade\Trade.mqh>
 #include <Controls\Button.mqh>  // For button control
+#include <Controls\Label.mqh>   // For Label control
+
+//+------------------------------------------------------------------+
+//| Enumeration for Stop-Loss Calculation                           |
+//+------------------------------------------------------------------+
+enum StopLossType
+{
+    OpenPrice,  // Use the open price of the selected SL candle
+    HighPrice,  // Use the high price of the selected SL candle
+    LowPrice,   // Use the low price of the selected SL candle
+    ClosePrice  // Use the close price of the selected SL candle
+};
 
 //+------------------------------------------------------------------+
 //| Global variables                                                 |
@@ -8,12 +20,22 @@ double entryPrice = 0;
 double stopLoss = 0;
 double trailEntryPrice = 0;
 int additionalTradesCount = 0;
+int stopLossCandleIndex = 1;              // 1: Immediate previous candle, 2: Two candles back
 bool initialTradePlaced = false;
 bool startTrading = false;          // Flag to start trading
 string currentSymbol;
+StopLossType stopLossOHLCOption = HighPrice;  // Stop-loss calculation type
 CTrade trade;                       // Declare the trade object for managing orders
 CButton startButton;                // Create a button object
 CButton closePositionsButton;       // Create a button object
+CLabel slCandleLabel;               // Declare a label object
+CButton immediatePreviousSLCandle;  // Create a button object
+CButton farPreviousSLCandle;        // Create a button object
+CLabel slFromOHLCLabel;             // Declare a label object
+CButton openButton;                 // Create a button object
+CButton highButton;                 // Create a button object
+CButton lowButton;                  // Create a button object
+CButton closeButton;                // Create a button object
 
 
 //+------------------------------------------------------------------+
@@ -22,38 +44,78 @@ CButton closePositionsButton;       // Create a button object
 const double TRADE_STOP_DISTANCE = 2; // 2 ticks away from SL to stop adding trades
 
 //+------------------------------------------------------------------+
-//| Enumeration for Stop-Loss Calculation                           |
-//+------------------------------------------------------------------+
-enum StopLossType
-{
-    HighPrice,  // Use the high price of the selected candle
-    OpenPrice   // Use the open price of the selected candle
-};
-
-//+------------------------------------------------------------------+
 //| Expert parameters                                                |
 //+------------------------------------------------------------------+
-input int StopLossCandleIndex = 1;              // 1: Immediate previous candle, 2: Two candles back
-input StopLossType StopLossOption = HighPrice;  // Stop-loss calculation type (dropdown)
 input double StopLossBufferPoint = 5;           // 5 points added to stop-loss for safety
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
 int OnInit()
+{    
+    // Add UI elements on the chart
+    HandleUIGraphics();
+
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Function to display EA settings on the chart                    |
+//+------------------------------------------------------------------+
+void HandleUIGraphics()
 {
     // Create button on chart to trigger auto-trading
-    startButton.Create(0, "StartButton", 0, 20, 150, 190, 110); // x1,y2,x2,y1
+    startButton.Create(0, "StartButton", 0, 20, 140, 190, 110); // x1, y2, x2, y1
     startButton.Text("Start Auto Trading");
     
     // Create button on chart to trigger close all positions
-    closePositionsButton.Create(0, "CloseAllPositions", 0, 210, 150, 370, 110); // x1,y2,x2,y1
+    closePositionsButton.Create(0, "CloseAllPositions", 0, 210, 140, 370, 110); // x1, y2, x2, y1
     closePositionsButton.Text("Close All Positions");
+    
+    // Create a label on the chart
+    slCandleLabel.Create(0, "SLCandleLabel", 0, 20, 160, 100, 130);       // x1, y2, x2, y1
+    slCandleLabel.Text("SL Candle:");                                     // Set the label text
+    slCandleLabel.Color(clrBlack);                                        // Set the label text color
+    slCandleLabel.FontSize(10);                                           // Set the font size
+    slCandleLabel.Font("Arial");                                          // Set the font type
+    
+    // Create button on chart
+    immediatePreviousSLCandle.Create(0, "ImmediatePreviousSLCandle", 0, 110, 190, 220, 160); // x1, y2, x2, y1
+    immediatePreviousSLCandle.Text("Imm. Prev");
+    immediatePreviousSLCandle.ColorBackground(clrGreen);
+    
+    // Create button on chart
+    farPreviousSLCandle.Create(0, "FarPreviousSLCandle", 0, 240, 190, 340, 160); // x1, y2, x2, y1
+    farPreviousSLCandle.Text("Far Prev");
+    farPreviousSLCandle.ColorBackground(clrRed);
+  
+  
+    // Create a label on the chart
+    slFromOHLCLabel.Create(0, "SLFromOHLCLabel", 0, 20, 210, 100, 180);   // x1, y2, x2, y1
+    slFromOHLCLabel.Text("SL From:");                                       // Set the label text
+    slFromOHLCLabel.Color(clrBlack);                                        // Set the label text color
+    slFromOHLCLabel.FontSize(10);                                           // Set the font size
+    slFromOHLCLabel.Font("Arial"); 
 
-    // Display settings on the chart
-    DisplaySettings();
-
-    return(INIT_SUCCEEDED);
+    // Create button on chart
+    openButton.Create(0, "OpenButton", 0, 110, 240, 160, 210); // x1, y2, x2, y1
+    openButton.Text("Open");
+    openButton.ColorBackground(clrRed);
+    
+    // Create button on chart
+    highButton.Create(0, "HighButton", 0, 170, 240, 220, 210); // x1, y2, x2, y1
+    highButton.Text("High");
+    highButton.ColorBackground(clrGreen);
+    
+    // Create button on chart
+    lowButton.Create(0, "LowButton", 0, 230, 240, 280, 210); // x1, y2, x2, y1
+    lowButton.Text("Low");
+    lowButton.ColorBackground(clrRed);
+    
+    // Create button on chart
+    closeButton.Create(0, "CloseButton", 0, 290, 240, 340, 210); // x1, y2, x2, y1
+    closeButton.Text("Close");
+    closeButton.ColorBackground(clrRed);
 }
 
 // OnChartEvent handler to catch button clicks
@@ -71,6 +133,56 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
         else if (sparam == "CloseAllPositions")
         {
             CloseAllPositions(); // Close all positions for the current symbol
+        }
+        else if (sparam == "ImmediatePreviousSLCandle")
+        {
+            stopLossCandleIndex = 1;
+            immediatePreviousSLCandle.ColorBackground(clrGreen);
+            farPreviousSLCandle.ColorBackground(clrRed);
+            Print("SL candle set to -> ", stopLossCandleIndex == 1 ? "Immediate Previous Candle" : "Far Previous Candle");
+        }
+        else if (sparam == "FarPreviousSLCandle")
+        {
+            stopLossCandleIndex = 2;
+            immediatePreviousSLCandle.ColorBackground(clrRed);
+            farPreviousSLCandle.ColorBackground(clrGreen);
+            Print("SL candle set to -> ", stopLossCandleIndex == 1 ? "Immediate Previous Candle" : "Far Previous Candle");
+        }
+        else if (sparam == "OpenButton")
+        {
+            stopLossOHLCOption = OpenPrice;
+            openButton.ColorBackground(clrGreen);
+            highButton.ColorBackground(clrRed);
+            lowButton.ColorBackground(clrRed);
+            closeButton.ColorBackground(clrRed);
+            Print("SL OHLC option set to -> ", stopLossOHLCOption);
+        }
+        else if (sparam == "HighButton")
+        {
+            stopLossOHLCOption = HighPrice;
+            openButton.ColorBackground(clrRed);
+            highButton.ColorBackground(clrGreen);
+            lowButton.ColorBackground(clrRed);
+            closeButton.ColorBackground(clrRed);
+            Print("SL OHLC option set to -> ", stopLossOHLCOption);
+        }
+        else if (sparam == "LowButton")
+        {
+            stopLossOHLCOption = LowPrice;
+            openButton.ColorBackground(clrRed);
+            highButton.ColorBackground(clrRed);
+            lowButton.ColorBackground(clrGreen);
+            closeButton.ColorBackground(clrRed);
+            Print("SL OHLC option set to -> ", stopLossOHLCOption);
+        }
+        else if (sparam == "CloseButton")
+        {
+            stopLossOHLCOption = ClosePrice;
+            openButton.ColorBackground(clrRed);
+            highButton.ColorBackground(clrRed);
+            lowButton.ColorBackground(clrRed);
+            closeButton.ColorBackground(clrGreen);
+            Print("SL OHLC option set to -> ", stopLossOHLCOption);
         }
     }
 }
@@ -109,6 +221,11 @@ void OnTick()
             }
         }
     }
+    
+    // Testing the Prices
+    // Print("1. LTP: ", SYMBOL_LAST, " , BID: ", SYMBOL_BID, " , ASK: ", SYMBOL_ASK);
+    // Print("2. LTP: ", SymbolInfoDouble(currentSymbol, SYMBOL_LAST), " , BID: ", SymbolInfoDouble(currentSymbol, SYMBOL_BID), " , ASK: ", SymbolInfoDouble(currentSymbol, SYMBOL_ASK));
+    
 }
 
 // Function to place the initial trade
@@ -117,16 +234,16 @@ void PlaceInitialTrade()
     // Example: Place a Sell trade (You can modify it to Buy based on your strategy)
     
     // Get data from the selected candle (immediate previous or two candles back)
-    double selectedCandleOpen = iOpen(NULL, Period(), StopLossCandleIndex);
-    double selectedCandleHigh = iHigh(NULL, Period(), StopLossCandleIndex);
+    double selectedCandleOpen = iOpen(NULL, Period(), stopLossCandleIndex);
+    double selectedCandleHigh = iHigh(NULL, Period(), stopLossCandleIndex);
     Print("selectedCandleOpen: ", selectedCandleOpen, " and selectedCandleHigh: ", selectedCandleHigh);
 
     // Determine stop-loss price based on user selection (high or open)
-    if (StopLossOption == HighPrice)
+    if (stopLossOHLCOption == HighPrice)
     {
         stopLoss = selectedCandleHigh + (StopLossBufferPoint * Point());   // Set stop-loss to price + buffer points for safety
     }
-    else if (StopLossOption == OpenPrice)
+    else if (stopLossOHLCOption == OpenPrice)
     {
         stopLoss = selectedCandleOpen + (StopLossBufferPoint * Point());   // Set stop-loss to price + buffer points for safety
     }
@@ -214,36 +331,3 @@ void CloseAllPositions()
     initialTradePlaced = false;  // Reset flag
     additionalTradesCount = 0;   // Reset additional trades count
 }
-
-
-//+------------------------------------------------------------------+
-//| Function to display EA settings on the chart                    |
-//+------------------------------------------------------------------+
-void DisplaySettings()
-{
-    string settingsLabel = "EA_Settings";
-    string stopLossCandleInfo = StringFormat("Stop-Loss Candle: %s", 
-                              StopLossCandleIndex == 1 ? "Immediate Previous" : "Two Candles Back");
-    string stopLossOptionInfo = StringFormat("Stop-Loss Type: %s", 
-                              StopLossOption == HighPrice ? "High Price" : "Open Price");
-
-    // Create a label for each setting on the chart
-    ObjectCreate(0, "StopLossCandleLabel", OBJ_LABEL, 0, 0, 0);
-    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_CORNER, 0);
-    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_XDISTANCE, 20);
-    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_YDISTANCE, 170);
-    ObjectSetString(0, "StopLossCandleLabel", OBJPROP_TEXT, stopLossCandleInfo);
-    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_COLOR, clrDarkRed);
-    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_FONTSIZE, 10);
-    ObjectSetString(0, "StopLossCandleLabel", OBJPROP_FONT, "Arial");
-    
-    ObjectCreate(0, "StopLossOptionLabel", OBJ_LABEL, 0, 0, 0);
-    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_CORNER, 0);
-    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_XDISTANCE, 20);
-    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_YDISTANCE, 190); // Position below the previous label
-    ObjectSetString(0, "StopLossOptionLabel", OBJPROP_TEXT, stopLossOptionInfo);
-    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_COLOR, clrDarkRed);
-    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_FONTSIZE, 10);
-    ObjectSetString(0, "StopLossOptionLabel", OBJPROP_FONT, "Arial");
-}
-
