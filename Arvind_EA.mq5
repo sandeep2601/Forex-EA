@@ -23,10 +23,13 @@ int additionalTradesCount = 0;
 int stopLossCandleIndex = 1;              // 1: Immediate previous candle, 2: Two candles back
 bool initialTradePlaced = false;
 bool startTrading = false;          // Flag to start trading
+bool buyTrade = true;               // Flag to set which trade is placed buy or sell
 string currentSymbol;
 StopLossType stopLossOHLCOption = HighPrice;  // Stop-loss calculation type
 CTrade trade;                       // Declare the trade object for managing orders
 CButton startButton;                // Create a button object
+CButton buyButton;                  // Create a button object
+CButton sellButton;                 // Create a button object
 CButton closePositionsButton;       // Create a button object
 CLabel slCandleLabel;               // Declare a label object
 CButton immediatePreviousSLCandle;  // Create a button object
@@ -63,14 +66,21 @@ int OnInit()
 //| Function to display EA settings on the chart                    |
 //+------------------------------------------------------------------+
 void HandleUIGraphics()
-{
-    // Create button on chart to trigger auto-trading
-    startButton.Create(0, "StartButton", 0, 20, 140, 190, 110); // x1, y2, x2, y1
-    startButton.Text("Start Auto Trading");
+{    
+    // Create button on chart to trigger buy trade
+    buyButton.Create(0, "BuyButton", 0, 20, 140, 80, 110); // x1, y2, x2, y1
+    buyButton.Text("Buy");
+    buyButton.ColorBackground(clrLightGreen);
+    
+    // Create button on chart to trigger sell trade
+    sellButton.Create(0, "SellButton", 0, 90, 140, 150, 110); // x1, y2, x2, y1
+    sellButton.Text("Sell");
+    sellButton.ColorBackground(clrLightSalmon);
     
     // Create button on chart to trigger close all positions
-    closePositionsButton.Create(0, "CloseAllPositions", 0, 210, 140, 370, 110); // x1, y2, x2, y1
+    closePositionsButton.Create(0, "CloseAllPositions", 0, 170, 140, 340, 110); // x1, y2, x2, y1
     closePositionsButton.Text("Close All Positions");
+    closePositionsButton.ColorBackground(clrLightSlateGray);
     
     // Create a label on the chart
     slCandleLabel.Create(0, "SLCandleLabel", 0, 20, 160, 100, 130);       // x1, y2, x2, y1
@@ -125,10 +135,17 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
     if (id == CHARTEVENT_OBJECT_CLICK)
     {
         // Check if the clicked object is our start button
-        if (sparam == "StartButton")
+        if (sparam == "BuyButton")
         {
             startTrading = true;  // Set the flag to start trading
-            Print("User Initiated the Automated Trading...");
+            buyTrade = true;
+            Print("User Initiated the Buy Trade");
+        }
+        else if (sparam == "SellButton")
+        {
+            startTrading = true;  // Set the flag to start trading
+            buyTrade = false;
+            Print("User Initiated the Sell Trade");
         }
         else if (sparam == "CloseAllPositions")
         {
@@ -190,10 +207,10 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
 //+------------------------------------------------------------------+
 //| Tick function                                                    |
 //+------------------------------------------------------------------+
+// Required for the EA to function. Add any periodic logic here if needed.
 void OnTick()
 {
-    // Required for the EA to function. Add any periodic logic here if needed.
-    // Only execute trading logic if the user has pressed the start button
+    // Only execute trading logic if the user has initiated the trade
     if (startTrading)
     {
         // Check if there is an open position for the current symbol
@@ -210,14 +227,19 @@ void OnTick()
             Print("Auto Trading Started");
             // If no positions are open, place the initial trade
             currentSymbol = Symbol();
-            PlaceInitialTrade();
+            if (buyTrade) {
+               PlaceBuyTrade();
+            }
+            else {
+               PlaceSellTrade();
+            }
         }
         else
         {
             // If an initial trade was placed, monitor the price and place additional trades
             if (initialTradePlaced)
             {
-                MonitorPriceAndPlaceTrades();
+                MonitorPriceAndPlaceAdditionalTrades();
             }
         }
     }
@@ -228,30 +250,62 @@ void OnTick()
     
 }
 
-// Function to place the initial trade
-void PlaceInitialTrade()
+// Function to place the buy trade
+void PlaceBuyTrade()
 {
-    // Example: Place a Sell trade (You can modify it to Buy based on your strategy)
+    // Get data from the selected candle (immediate previous or two candles back)
+    double selectedCandleLow = iLow(NULL, Period(), stopLossCandleIndex);
+    double selectedCandleClose = iClose(NULL, Period(), stopLossCandleIndex);
+
+    // Determine stop-loss price based on user selection (high or open)
+    if (stopLossOHLCOption == LowPrice)
+    {
+        stopLoss = NormalizeDouble(selectedCandleLow - (StopLossBufferPoint * Point()), Digits());   // Set stop-loss to price - buffer points for safety
+    }
+    else if (stopLossOHLCOption == ClosePrice)
+    {
+        stopLoss = NormalizeDouble(selectedCandleClose - (StopLossBufferPoint * Point()), Digits());   // Set stop-loss to price - buffer points for safety
+    }
     
+    double price = SymbolInfoDouble(currentSymbol, SYMBOL_ASK); // Get current ASK price
+    double tp = 0; // No target exit, as per your strategy
+    Print("selectedCandleLow: ", selectedCandleLow, " and selectedCandleClose: ", selectedCandleClose, "entry price: ", price, " and stopLoss: ", stopLoss);
+
+    // Place the initial sell order
+    if (trade.Buy(0.01, currentSymbol, price, stopLoss, tp, "Initial Buy Trade") == false)
+    {
+        Print("Error opening initial buy order: ", GetLastError());
+    }
+    else
+    {
+        entryPrice = price;
+        trailEntryPrice = price;
+        initialTradePlaced = true;
+        Print("Placed First Buy Trade with: EntryPrice: ",entryPrice, " and StopLoss: ", stopLoss);
+    }
+}
+
+// Function to place the sell trade
+void PlaceSellTrade()
+{    
     // Get data from the selected candle (immediate previous or two candles back)
     double selectedCandleOpen = iOpen(NULL, Period(), stopLossCandleIndex);
     double selectedCandleHigh = iHigh(NULL, Period(), stopLossCandleIndex);
-    Print("selectedCandleOpen: ", selectedCandleOpen, " and selectedCandleHigh: ", selectedCandleHigh);
 
     // Determine stop-loss price based on user selection (high or open)
     if (stopLossOHLCOption == HighPrice)
     {
-        stopLoss = selectedCandleHigh + (StopLossBufferPoint * Point());   // Set stop-loss to price + buffer points for safety
+        stopLoss = NormalizeDouble(selectedCandleHigh + (StopLossBufferPoint * Point()), Digits());   // Set stop-loss to price + buffer points for safety
+
     }
     else if (stopLossOHLCOption == OpenPrice)
     {
-        stopLoss = selectedCandleOpen + (StopLossBufferPoint * Point());   // Set stop-loss to price + buffer points for safety
+        stopLoss = NormalizeDouble(selectedCandleOpen + (StopLossBufferPoint * Point()), Digits());   // Set stop-loss to price + buffer points for safety
     }
-    Print("StopLossBufferPoint: ", StopLossBufferPoint, " and stopLoss: ", stopLoss);
-
     
-    double price = SymbolInfoDouble(currentSymbol, SYMBOL_LAST); // Get current bid price
+    double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Get current BID price
     double tp = 0; // No target exit, as per your strategy
+    Print("selectedCandleOpen: ", selectedCandleOpen, " and selectedCandleHigh: ", selectedCandleHigh, "entry price: ", price, " and stopLoss: ", stopLoss);
 
     // Place the initial sell order
     if (trade.Sell(0.01, currentSymbol, price, stopLoss, tp, "Initial Sell Trade") == false)
@@ -263,45 +317,51 @@ void PlaceInitialTrade()
         entryPrice = price;
         trailEntryPrice = price;
         initialTradePlaced = true;
-        Print("Placed First Trade with: EntryPrice: ",entryPrice, " and StopLoss: ", stopLoss);
+        Print("Placed First Sell Trade with: EntryPrice: ",entryPrice, " and StopLoss: ", stopLoss);
     }
 }
 
 // Function to monitor price and place additional trades
-void MonitorPriceAndPlaceTrades()
+void MonitorPriceAndPlaceAdditionalTrades()
 {
     // Get the current price
-    double currentPrice = SymbolInfoDouble(currentSymbol, SYMBOL_LAST);  // Get last traded price
+    double bidOrAskPrice = SymbolInfoDouble(currentSymbol, buyTrade ? SYMBOL_ASK : SYMBOL_BID);  // Get BID/ASK price based on order type
 
     // Check if the price is within 1 tick (TRADE_DISTANCE) of the stop-loss
-    if (currentPrice > trailEntryPrice && startTrading)
+    if (bidOrAskPrice > trailEntryPrice && startTrading)
     {
-        if (currentPrice < stopLoss - (TRADE_STOP_DISTANCE * Point()) && additionalTradesCount < 30) // Limit to 30 trades for safety
+        if (bidOrAskPrice < NormalizeDouble(stopLoss - (TRADE_STOP_DISTANCE * Point()), Digits()) && additionalTradesCount < 30) // Limit to 30 trades for safety
         {
             // Place additional sell trade
-            // double price = SymbolInfoDouble(currentSymbol, SYMBOL_LAST); // Place at current market price
+            bool tradePlaced = false;
 
-            // Place additional sell trade
-            if (trade.Sell(0.01, currentSymbol, currentPrice, stopLoss, 0, "Additional Sell Trade") == false)
+            // Place additional buy/sell trades
+            if (buyTrade) {
+               tradePlaced = trade.Buy(0.01, currentSymbol, bidOrAskPrice, stopLoss, 0, "Additional Sell Trade");
+            }
+            else {
+               tradePlaced = trade.Sell(0.01, currentSymbol, bidOrAskPrice, stopLoss, 0, "Additional Sell Trade");
+            }
+            if (tradePlaced == false)
             {
-                Print("Error opening additional sell order: ", GetLastError());
+                Print("Error opening additional ", buyTrade ? "buy" : "sell", " order: ", GetLastError());
             }
             else
             {
                 additionalTradesCount++;
-                trailEntryPrice = currentPrice;
-                Print("Placed Additional Trade NO: ", additionalTradesCount, " with: EntryPrice: ",entryPrice, " and StopLoss: ", stopLoss);
+                trailEntryPrice = bidOrAskPrice;
+                Print("Placed Additional Trade with count: ", additionalTradesCount, " with: EntryPrice: ",entryPrice, " and StopLoss: ", stopLoss);
             }
         }
 
         // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (TRADE_STOP_DISTANCE)
-        if (currentPrice == stopLoss - (TRADE_STOP_DISTANCE * Point()))
+        if (bidOrAskPrice == NormalizeDouble(stopLoss - (TRADE_STOP_DISTANCE * Point()), Digits()))
         {
             Print("Stop placing additional trades, final stop-loss reached.");
         }
 
         // Check if the stop-loss is hit for any trade
-        if (currentPrice >= stopLoss)
+        if (bidOrAskPrice >= stopLoss)
         {
             CloseAllPositions(); // Close all positions if stop-loss is hit
         }
@@ -311,6 +371,7 @@ void MonitorPriceAndPlaceTrades()
 // Function to close all positions
 void CloseAllPositions()
 {
+    Print("Total positions to be closed: ", PositionsTotal());
     for (int i = 0; i < PositionsTotal(); i++)
     {
         if (PositionSelect(currentSymbol))  // Ensure the position is selected
@@ -322,7 +383,7 @@ void CloseAllPositions()
             }
             else
             {
-                Print("Position closed successfully.");
+                Print("Position ", i + 1 ," closed successfully.");
             }
         }
     }
