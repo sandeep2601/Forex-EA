@@ -168,7 +168,7 @@ void MonitorPriceAndPlaceTrades()
         }
 
         // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (TRADE_STOP_DISTANCE)
-        if (currentPrice = stopLoss - (TRADE_STOP_DISTANCE * Point()))
+        if (currentPrice == stopLoss - (TRADE_STOP_DISTANCE * Point()))
         {
             Print("Stop placing additional trades, final stop-loss reached.");
         }
