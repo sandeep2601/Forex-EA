@@ -87,6 +87,14 @@ void OnTick()
         // Check if there is an open position for the current symbol
         if (PositionsTotal() == 0)
         {
+            // If positions are closed and SL is hit, stop trading
+            if (initialTradePlaced)
+            {
+                Print("Stop-loss hit. Closing all positions and resetting flags.");
+                CloseAllPositions();         // Ensure all positions are closed
+                return;                      // Exit tick processing to prevent new trades
+            }
+            
             Print("Auto Trading Started");
             // If no positions are open, place the initial trade
             currentSymbol = Symbol();
