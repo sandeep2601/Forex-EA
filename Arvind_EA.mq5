@@ -1,7 +1,24 @@
 #include <Trade\Trade.mqh>
+#include <Controls\Button.mqh>  // For button control
 
-// Declare the trade object
-CTrade trade;
+//+------------------------------------------------------------------+
+//| Global variables                                                 |
+//+------------------------------------------------------------------+
+double entryPrice = 0;
+double stopLoss = 0;
+int additionalTradesCount = 0;
+bool initialTradePlaced = false;
+bool startTrading = false;          // Flag to start trading
+string currentSymbol;
+CTrade trade;                       // Declare the trade object for managing orders
+CButton startButton;                // Create a button object
+
+
+//+------------------------------------------------------------------+
+//| Constants for SL movement (in ticks)                             |
+//+------------------------------------------------------------------+
+const double TRADE_DISTANCE = 1 * Point();    // 1 tick away from SL to trigger additional trade
+const double STOPLOSS_DISTANCE = 2 * Point(); // 2 ticks away from SL to stop adding trades
 
 //+------------------------------------------------------------------+
 //| Enumeration for Stop-Loss Calculation                           |
@@ -15,37 +32,46 @@ enum StopLossType
 //+------------------------------------------------------------------+
 //| Expert parameters                                                |
 //+------------------------------------------------------------------+
-input int StopLossCandleIndex = 1;       // 1: Immediate previous candle, 2: Two candles back
-input StopLossType StopLossOption = HighPrice; // Stop-loss calculation type (dropdown)
+input int StopLossCandleIndex = 1;              // 1: Immediate previous candle, 2: Two candles back
+input StopLossType StopLossOption = HighPrice;  // Stop-loss calculation type (dropdown)
+input double StopLossBufferPoint = 5;           // 5 points added to stop-loss for safety
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
 int OnInit()
 {
-    // Create buttons for user actions
-    ObjectCreate(0, "StartButton", OBJ_BUTTON, 0, 0, 0);
-    ObjectSetInteger(0, "StartButton", OBJPROP_CORNER, 0);
-    ObjectSetInteger(0, "StartButton", OBJPROP_XDISTANCE, 20);
-    ObjectSetInteger(0, "StartButton", OBJPROP_YDISTANCE, 30);
-    ObjectSetInteger(0, "StartButton", OBJPROP_XSIZE, 100);  // Set button width (default is 50)
-    ObjectSetInteger(0, "StartButton", OBJPROP_YSIZE, 30);  // Set button height (default is 15)
-    ObjectSetInteger(0, "StartButton", OBJPROP_BGCOLOR, clrWhite); // Button background color
-    ObjectSetInteger(0, "StartButton", OBJPROP_COLOR, clrRoyalBlue); // Text color
-    ObjectSetString(0, "StartButton", OBJPROP_TEXT, "Start Trade");
-
-    ObjectCreate(0, "CloseAllButton", OBJ_BUTTON, 0, 0, 0);
-    ObjectSetInteger(0, "CloseAllButton", OBJPROP_CORNER, 0);
-    ObjectSetInteger(0, "CloseAllButton", OBJPROP_XDISTANCE, 150);
-    ObjectSetInteger(0, "CloseAllButton", OBJPROP_YDISTANCE, 30);
-    ObjectSetInteger(0, "CloseAllButton", OBJPROP_XSIZE, 150);  // Set button width (default is 50)
-    ObjectSetInteger(0, "CloseAllButton", OBJPROP_YSIZE, 30);  // Set button height (default is 15)
-    ObjectSetString(0, "CloseAllButton", OBJPROP_TEXT, "Close All Positions");
+    // Create button on chart to trigger auto-trading
+    startButton.Create(0, "StartButton", 0, 20, 150, 190, 110); // x1,y2,x2,y1
+    startButton.Text("Start Auto Trading");
+    
+    // Create button on chart to trigger close all positions
+    startButton.Create(0, "CloseAllPositions", 0, 210, 150, 370, 110); // x1,y2,x2,y1
+    startButton.Text("Close All Positions");
 
     // Display settings on the chart
     DisplaySettings();
 
     return(INIT_SUCCEEDED);
+}
+
+// OnChartEvent handler to catch button clicks
+void OnChartEvent(const int id, const long& lparam, const double& dparam, const string& sparam)
+{
+    // Check if the event is a button click event
+    if (id == CHARTEVENT_OBJECT_CLICK)
+    {
+        // Check if the clicked object is our start button
+        if (sparam == "StartButton")
+        {
+            startTrading = true;  // Set the flag to start trading
+            Print("User Initiated the Automated Trading...");
+        }
+        else if (sparam == "CloseAllPositions")
+        {
+            CloseAllPositions(); // Close all positions for the current symbol
+        }
+    }
 }
 
 //+------------------------------------------------------------------+
@@ -54,26 +80,113 @@ int OnInit()
 void OnTick()
 {
     // Required for the EA to function. Add any periodic logic here if needed.
-}
-
-//+------------------------------------------------------------------+
-//| Chart events function                                            |
-//+------------------------------------------------------------------+
-void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
-{
-    // Check for button clicks
-    if (id == CHARTEVENT_OBJECT_CLICK)
+    // Only execute trading logic if the user has pressed the start button
+    if (startTrading)
     {
-        if (sparam == "StartButton")
+        Print("Auto Trading Started");
+        // Check if there is an open position for the current symbol
+        if (PositionsTotal() == 0)
         {
-            StartTrade(); // Start the trading strategy
+            // If no positions are open, place the initial trade
+            currentSymbol = Symbol();
+            PlaceInitialTrade();
         }
-        else if (sparam == "CloseAllButton")
+        else
         {
-            CloseAllPositions(); // Close all positions for the current symbol
+            // If an initial trade was placed, monitor the price and place additional trades
+            if (initialTradePlaced)
+            {
+                MonitorPriceAndPlaceTrades();
+            }
         }
     }
 }
+
+// Function to place the initial trade
+void PlaceInitialTrade()
+{
+    // Example: Place a Sell trade (You can modify it to Buy based on your strategy)
+    double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Get current bid price
+    double sl = price + StopLossBufferPoint; // Set stop-loss to price + buffer points for safety
+    double tp = 0; // No target exit, as per your strategy
+
+    entryPrice = price;
+    stopLoss = sl;
+
+    // Place the initial sell order
+    if (trade.Sell(0.01, currentSymbol, price, sl, tp, "Initial Sell Trade") == false)
+    {
+        Print("Error opening initial sell order: ", GetLastError());
+    }
+    else
+    {
+        initialTradePlaced = true;
+    }
+}
+
+// Function to monitor price and place additional trades
+void MonitorPriceAndPlaceTrades()
+{
+    // Get the current price
+    double currentPrice = SymbolInfoDouble(currentSymbol, SYMBOL_BID);  // Get current bid price
+
+    // Check if the price is within 1 tick (TRADE_DISTANCE) of the stop-loss
+    if (currentPrice <= stopLoss - TRADE_DISTANCE && additionalTradesCount < 10) // Limit to 10 trades for safety
+    {
+        // Place additional sell trade
+        double sl = stopLoss + StopLossBufferPoint; // Adjust stop-loss for new trade
+        double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Place at current market price
+
+        // Place additional sell trade
+        if (trade.Sell(0.01, currentSymbol, price, sl, 0, "Additional Sell Trade") == false)
+        {
+            Print("Error opening additional sell order: ", GetLastError());
+        }
+        else
+        {
+            additionalTradesCount++;
+            Print("Placed additional sell trade #", additionalTradesCount);
+        }
+    }
+
+    // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (STOPLOSS_DISTANCE)
+    if (currentPrice <= stopLoss - STOPLOSS_DISTANCE)
+    {
+        Print("Stop placing additional trades, final stop-loss reached.");
+    }
+
+    // Check if the stop-loss is hit for any trade
+    if (currentPrice >= stopLoss)
+    {
+        CloseAllPositions(); // Close all positions if stop-loss is hit
+    }
+}
+
+// Function to close all positions
+void CloseAllPositions()
+{
+    for (int i = 0; i < PositionsTotal(); i++)
+    {
+        if (PositionSelect(currentSymbol))  // Ensure the position is selected
+        {
+            // Close the position
+            double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Close at current market price for sell
+            if (trade.PositionClose(currentSymbol) == false)
+            {
+                Print("Error closing position: ", GetLastError());
+            }
+            else
+            {
+                Print("Position closed successfully.");
+            }
+        }
+    }
+    
+    startTrading = false;        // Reset Flag
+    initialTradePlaced = false;  // Reset flag
+    additionalTradesCount = 0;   // Reset additional trades count
+}
+
 
 //+------------------------------------------------------------------+
 //| Function to display EA settings on the chart                    |
@@ -90,7 +203,7 @@ void DisplaySettings()
     ObjectCreate(0, "StopLossCandleLabel", OBJ_LABEL, 0, 0, 0);
     ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_CORNER, 0);
     ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_XDISTANCE, 20);
-    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_YDISTANCE, 70);
+    ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_YDISTANCE, 170);
     ObjectSetString(0, "StopLossCandleLabel", OBJPROP_TEXT, stopLossCandleInfo);
     ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_COLOR, clrDarkRed);
     ObjectSetInteger(0, "StopLossCandleLabel", OBJPROP_FONTSIZE, 10);
@@ -99,52 +212,10 @@ void DisplaySettings()
     ObjectCreate(0, "StopLossOptionLabel", OBJ_LABEL, 0, 0, 0);
     ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_CORNER, 0);
     ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_XDISTANCE, 20);
-    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_YDISTANCE, 90); // Position below the previous label
+    ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_YDISTANCE, 190); // Position below the previous label
     ObjectSetString(0, "StopLossOptionLabel", OBJPROP_TEXT, stopLossOptionInfo);
     ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_COLOR, clrDarkRed);
     ObjectSetInteger(0, "StopLossOptionLabel", OBJPROP_FONTSIZE, 10);
     ObjectSetString(0, "StopLossOptionLabel", OBJPROP_FONT, "Arial");
 }
 
-//+------------------------------------------------------------------+
-//| Start Trade Logic                                                |
-//+------------------------------------------------------------------+
-void StartTrade()
-{
-    double stopLoss, entryPrice;
-    double slBuffer = 5 * Point(); // 5-point buffer
-
-    // Get data from the selected candle (immediate previous or two candles back)
-    double selectedCandleOpen = iOpen(NULL, PERIOD_M1, StopLossCandleIndex);
-    double selectedCandleHigh = iHigh(NULL, PERIOD_M1, StopLossCandleIndex);
-
-    // Determine stop-loss price based on user selection (high or open)
-    if (StopLossOption == HighPrice)
-    {
-        stopLoss = selectedCandleHigh + slBuffer;
-    }
-    else if (StopLossOption == OpenPrice)
-    {
-        stopLoss = selectedCandleOpen + slBuffer;
-    }
-
-    entryPrice = SymbolInfoDouble(Symbol(), SYMBOL_BID);
-
-    // Place initial sell trade
-    trade.Sell(0.1, Symbol(), entryPrice, stopLoss, 0, "Initial Sell");
-}
-
-//+------------------------------------------------------------------+
-//| Close All Positions                                              |
-//+------------------------------------------------------------------+
-void CloseAllPositions()
-{
-    // Close all positions for the current symbol
-    for (int i = PositionsTotal() - 1; i >= 0; i--)
-    {
-        if (PositionSelect(Symbol()))
-        {
-            trade.PositionClose(Symbol());
-        }
-    }
-}
