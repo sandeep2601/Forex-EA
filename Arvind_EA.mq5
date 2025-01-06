@@ -6,6 +6,7 @@
 //+------------------------------------------------------------------+
 double entryPrice = 0;
 double stopLoss = 0;
+double trailEntryPrice = 0;
 int additionalTradesCount = 0;
 bool initialTradePlaced = false;
 bool startTrading = false;          // Flag to start trading
@@ -17,8 +18,8 @@ CButton startButton;                // Create a button object
 //+------------------------------------------------------------------+
 //| Constants for SL movement (in ticks)                             |
 //+------------------------------------------------------------------+
-const double TRADE_DISTANCE = 1 * Point();    // 1 tick away from SL to trigger additional trade
-const double STOPLOSS_DISTANCE = 2 * Point(); // 2 ticks away from SL to stop adding trades
+const double TRADE_DISTANCE = 1;    // 1 tick away from SL to trigger additional trade
+const double STOPLOSS_DISTANCE = 2; // 2 ticks away from SL to stop adding trades
 
 //+------------------------------------------------------------------+
 //| Enumeration for Stop-Loss Calculation                           |
@@ -107,14 +108,14 @@ void PlaceInitialTrade()
 {
     // Example: Place a Sell trade (You can modify it to Buy based on your strategy)
     double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Get current bid price
-    double sl = price + StopLossBufferPoint; // Set stop-loss to price + buffer points for safety
+    stopLoss = price + StopLossBufferPoint; // Set stop-loss to price + buffer points for safety
     double tp = 0; // No target exit, as per your strategy
 
     entryPrice = price;
-    stopLoss = sl;
+    trailEntryPrice = price;
 
     // Place the initial sell order
-    if (trade.Sell(0.01, currentSymbol, price, sl, tp, "Initial Sell Trade") == false)
+    if (trade.Sell(0.01, currentSymbol, price, stopLoss, tp, "Initial Sell Trade") == false)
     {
         Print("Error opening initial sell order: ", GetLastError());
     }
@@ -130,35 +131,40 @@ void MonitorPriceAndPlaceTrades()
     // Get the current price
     double currentPrice = SymbolInfoDouble(currentSymbol, SYMBOL_BID);  // Get current bid price
 
+    Print("MonitorPriceAndPlaceTrades() -> TRADE_DISTANCE: ", TRADE_DISTANCE);
+    Print("MonitorPriceAndPlaceTrades() -> stopLoss: ", stopLoss);
+    Print("MonitorPriceAndPlaceTrades() -> stopLoss - TRADE_DISTANCE: ", stopLoss - TRADE_DISTANCE);
     // Check if the price is within 1 tick (TRADE_DISTANCE) of the stop-loss
-    if (currentPrice <= stopLoss - TRADE_DISTANCE && additionalTradesCount < 10) // Limit to 10 trades for safety
+    if (currentPrice > trailEntryPrice && startTrading)
     {
-        // Place additional sell trade
-        double sl = stopLoss + StopLossBufferPoint; // Adjust stop-loss for new trade
-        double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Place at current market price
-
-        // Place additional sell trade
-        if (trade.Sell(0.01, currentSymbol, price, sl, 0, "Additional Sell Trade") == false)
+        if (currentPrice < stopLoss - STOPLOSS_DISTANCE && additionalTradesCount < 10) // Limit to 10 trades for safety
         {
-            Print("Error opening additional sell order: ", GetLastError());
+            // Place additional sell trade
+            double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Place at current market price
+
+            // Place additional sell trade
+            if (trade.Sell(0.01, currentSymbol, price, stopLoss, 0, "Additional Sell Trade") == false)
+            {
+                Print("Error opening additional sell order: ", GetLastError());
+            }
+            else
+            {
+                additionalTradesCount++;
+                Print("Placed additional sell trade #", additionalTradesCount);
+            }
         }
-        else
+
+        // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (STOPLOSS_DISTANCE)
+        if (currentPrice = stopLoss - STOPLOSS_DISTANCE)
         {
-            additionalTradesCount++;
-            Print("Placed additional sell trade #", additionalTradesCount);
+            Print("Stop placing additional trades, final stop-loss reached.");
         }
-    }
 
-    // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (STOPLOSS_DISTANCE)
-    if (currentPrice <= stopLoss - STOPLOSS_DISTANCE)
-    {
-        Print("Stop placing additional trades, final stop-loss reached.");
-    }
-
-    // Check if the stop-loss is hit for any trade
-    if (currentPrice >= stopLoss)
-    {
-        CloseAllPositions(); // Close all positions if stop-loss is hit
+        // Check if the stop-loss is hit for any trade
+        if (currentPrice >= stopLoss)
+        {
+            CloseAllPositions(); // Close all positions if stop-loss is hit
+        }
     }
 }
 
