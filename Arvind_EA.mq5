@@ -13,6 +13,7 @@ bool startTrading = false;          // Flag to start trading
 string currentSymbol;
 CTrade trade;                       // Declare the trade object for managing orders
 CButton startButton;                // Create a button object
+CButton closePositionsButton;       // Create a button object
 
 
 //+------------------------------------------------------------------+
@@ -46,8 +47,8 @@ int OnInit()
     startButton.Text("Start Auto Trading");
     
     // Create button on chart to trigger close all positions
-    startButton.Create(0, "CloseAllPositions", 0, 210, 150, 370, 110); // x1,y2,x2,y1
-    startButton.Text("Close All Positions");
+    closePositionsButton.Create(0, "CloseAllPositions", 0, 210, 150, 370, 110); // x1,y2,x2,y1
+    closePositionsButton.Text("Close All Positions");
 
     // Display settings on the chart
     DisplaySettings();
@@ -163,6 +164,7 @@ void MonitorPriceAndPlaceTrades()
             else
             {
                 additionalTradesCount++;
+                trailEntryPrice = currentPrice;
                 Print("Placed Additional Trade NO: ", additionalTradesCount, " with: EntryPrice: ",entryPrice, " and StopLoss: ", stopLoss);
             }
         }
