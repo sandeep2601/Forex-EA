@@ -18,8 +18,7 @@ CButton startButton;                // Create a button object
 //+------------------------------------------------------------------+
 //| Constants for SL movement (in ticks)                             |
 //+------------------------------------------------------------------+
-const double TRADE_DISTANCE = 1;    // 1 tick away from SL to trigger additional trade
-const double STOPLOSS_DISTANCE = 2; // 2 ticks away from SL to stop adding trades
+const double TRADE_STOP_DISTANCE = 2; // 2 ticks away from SL to stop adding trades
 
 //+------------------------------------------------------------------+
 //| Enumeration for Stop-Loss Calculation                           |
@@ -84,10 +83,10 @@ void OnTick()
     // Only execute trading logic if the user has pressed the start button
     if (startTrading)
     {
-        Print("Auto Trading Started");
         // Check if there is an open position for the current symbol
         if (PositionsTotal() == 0)
         {
+            Print("Auto Trading Started");
             // If no positions are open, place the initial trade
             currentSymbol = Symbol();
             PlaceInitialTrade();
@@ -107,12 +106,26 @@ void OnTick()
 void PlaceInitialTrade()
 {
     // Example: Place a Sell trade (You can modify it to Buy based on your strategy)
-    double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Get current bid price
-    stopLoss = price + StopLossBufferPoint; // Set stop-loss to price + buffer points for safety
-    double tp = 0; // No target exit, as per your strategy
+    
+    // Get data from the selected candle (immediate previous or two candles back)
+    double selectedCandleOpen = iOpen(NULL, PERIOD_M1, StopLossCandleIndex);
+    double selectedCandleHigh = iHigh(NULL, PERIOD_M1, StopLossCandleIndex);
+    Print("selectedCandleOpen: ", selectedCandleOpen, " and selectedCandleHigh: ", selectedCandleHigh);
 
-    entryPrice = price;
-    trailEntryPrice = price;
+    // Determine stop-loss price based on user selection (high or open)
+    if (StopLossOption == HighPrice)
+    {
+        stopLoss = selectedCandleHigh + (StopLossBufferPoint * Point());   // Set stop-loss to price + buffer points for safety
+    }
+    else if (StopLossOption == OpenPrice)
+    {
+        stopLoss = selectedCandleOpen + (StopLossBufferPoint * Point());   // Set stop-loss to price + buffer points for safety
+    }
+    Print("StopLossBufferPoint: ", StopLossBufferPoint, " and stopLoss: ", stopLoss);
+
+    
+    double price = SymbolInfoDouble(currentSymbol, SYMBOL_LAST); // Get current bid price
+    double tp = 0; // No target exit, as per your strategy
 
     // Place the initial sell order
     if (trade.Sell(0.01, currentSymbol, price, stopLoss, tp, "Initial Sell Trade") == false)
@@ -121,7 +134,10 @@ void PlaceInitialTrade()
     }
     else
     {
+        entryPrice = price;
+        trailEntryPrice = price;
         initialTradePlaced = true;
+        Print("Placed First Trade with: EntryPrice: ",entryPrice, " and StopLoss: ", stopLoss);
     }
 }
 
@@ -129,33 +145,30 @@ void PlaceInitialTrade()
 void MonitorPriceAndPlaceTrades()
 {
     // Get the current price
-    double currentPrice = SymbolInfoDouble(currentSymbol, SYMBOL_BID);  // Get current bid price
+    double currentPrice = SymbolInfoDouble(currentSymbol, SYMBOL_LAST);  // Get last traded price
 
-    Print("MonitorPriceAndPlaceTrades() -> TRADE_DISTANCE: ", TRADE_DISTANCE);
-    Print("MonitorPriceAndPlaceTrades() -> stopLoss: ", stopLoss);
-    Print("MonitorPriceAndPlaceTrades() -> stopLoss - TRADE_DISTANCE: ", stopLoss - TRADE_DISTANCE);
     // Check if the price is within 1 tick (TRADE_DISTANCE) of the stop-loss
     if (currentPrice > trailEntryPrice && startTrading)
     {
-        if (currentPrice < stopLoss - STOPLOSS_DISTANCE && additionalTradesCount < 10) // Limit to 10 trades for safety
+        if (currentPrice < stopLoss - (TRADE_STOP_DISTANCE * Point()) && additionalTradesCount < 30) // Limit to 30 trades for safety
         {
             // Place additional sell trade
-            double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Place at current market price
+            // double price = SymbolInfoDouble(currentSymbol, SYMBOL_LAST); // Place at current market price
 
             // Place additional sell trade
-            if (trade.Sell(0.01, currentSymbol, price, stopLoss, 0, "Additional Sell Trade") == false)
+            if (trade.Sell(0.01, currentSymbol, currentPrice, stopLoss, 0, "Additional Sell Trade") == false)
             {
                 Print("Error opening additional sell order: ", GetLastError());
             }
             else
             {
                 additionalTradesCount++;
-                Print("Placed additional sell trade #", additionalTradesCount);
+                Print("Placed Additional Trade NO: ", additionalTradesCount, " with: EntryPrice: ",entryPrice, " and StopLoss: ", stopLoss);
             }
         }
 
-        // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (STOPLOSS_DISTANCE)
-        if (currentPrice = stopLoss - STOPLOSS_DISTANCE)
+        // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (TRADE_STOP_DISTANCE)
+        if (currentPrice = stopLoss - (TRADE_STOP_DISTANCE * Point()))
         {
             Print("Stop placing additional trades, final stop-loss reached.");
         }
@@ -176,7 +189,6 @@ void CloseAllPositions()
         if (PositionSelect(currentSymbol))  // Ensure the position is selected
         {
             // Close the position
-            double price = SymbolInfoDouble(currentSymbol, SYMBOL_BID); // Close at current market price for sell
             if (trade.PositionClose(currentSymbol) == false)
             {
                 Print("Error closing position: ", GetLastError());
