@@ -117,8 +117,8 @@ void PlaceInitialTrade()
     // Example: Place a Sell trade (You can modify it to Buy based on your strategy)
     
     // Get data from the selected candle (immediate previous or two candles back)
-    double selectedCandleOpen = iOpen(NULL, PERIOD_M1, StopLossCandleIndex);
-    double selectedCandleHigh = iHigh(NULL, PERIOD_M1, StopLossCandleIndex);
+    double selectedCandleOpen = iOpen(NULL, Period(), StopLossCandleIndex);
+    double selectedCandleHigh = iHigh(NULL, Period(), StopLossCandleIndex);
     Print("selectedCandleOpen: ", selectedCandleOpen, " and selectedCandleHigh: ", selectedCandleHigh);
 
     // Determine stop-loss price based on user selection (high or open)
