@@ -361,9 +361,17 @@ void MonitorPriceAndPlaceAdditionalTrades()
         }
 
         // Check if the stop-loss is hit for any trade
-        if (bidOrAskPrice >= stopLoss)
-        {
-            CloseAllPositions(); // Close all positions if stop-loss is hit
+        if (buyTrade) {
+           if (bidOrAskPrice <= stopLoss)
+           {
+               CloseAllPositions(); // Close all positions if stop-loss is hit
+           }
+        }
+        else {
+           if (bidOrAskPrice >= stopLoss)
+           {
+               CloseAllPositions(); // Close all positions if stop-loss is hit
+           }
         }
     }
 }
