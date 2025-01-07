@@ -324,55 +324,80 @@ void PlaceSellTrade()
 // Function to monitor price and place additional trades
 void MonitorPriceAndPlaceAdditionalTrades()
 {
-    // Get the current price
-    double bidOrAskPrice = SymbolInfoDouble(currentSymbol, buyTrade ? SYMBOL_ASK : SYMBOL_BID);  // Get BID/ASK price based on order type
-
-    // Check if the price is within 1 tick (TRADE_DISTANCE) of the stop-loss
-    if (bidOrAskPrice > trailEntryPrice && startTrading)
+    double price = 0;
+    if (buyTrade)
     {
-        if (bidOrAskPrice < NormalizeDouble(stopLoss - (TRADE_STOP_DISTANCE * Point()), Digits()) && additionalTradesCount < 30) // Limit to 30 trades for safety
-        {
-            // Place additional sell trade
-            bool tradePlaced = false;
-
-            // Place additional buy/sell trades
-            if (buyTrade) {
-               tradePlaced = trade.Buy(0.01, currentSymbol, bidOrAskPrice, stopLoss, 0, "Additional Sell Trade");
-            }
-            else {
-               tradePlaced = trade.Sell(0.01, currentSymbol, bidOrAskPrice, stopLoss, 0, "Additional Sell Trade");
-            }
-            if (tradePlaced == false)
-            {
-                Print("Error opening additional ", buyTrade ? "buy" : "sell", " order: ", GetLastError());
-            }
-            else
-            {
-                additionalTradesCount++;
-                trailEntryPrice = bidOrAskPrice;
-                Print("Placed Additional Trade with count: ", additionalTradesCount, " with: EntryPrice: ",entryPrice, " and StopLoss: ", stopLoss);
-            }
-        }
-
-        // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (TRADE_STOP_DISTANCE)
-        if (bidOrAskPrice == NormalizeDouble(stopLoss - (TRADE_STOP_DISTANCE * Point()), Digits()))
-        {
-            Print("Stop placing additional trades, final stop-loss reached.");
-        }
-
-        // Check if the stop-loss is hit for any trade
-        if (buyTrade) {
-           if (bidOrAskPrice <= stopLoss)
+       // Get the current price
+       price = SymbolInfoDouble(currentSymbol, SYMBOL_ASK);  // Get BID/ASK price based on order type
+   
+       // Check if the price is within 1 tick (TRADE_DISTANCE) of the stop-loss
+       if (price < trailEntryPrice && startTrading)
+       {
+           double tradeStopPrice = NormalizeDouble(stopLoss + (TRADE_STOP_DISTANCE * Point()), Digits());
+           if (price > tradeStopPrice && additionalTradesCount < 30) // Limit to 30 trades for safety
+           {
+               // Place additional buy trade
+               if (trade.Buy(0.01, currentSymbol, price, stopLoss, 0, "Additional Buy Trade") == false)
+               {
+                   Print("Error opening additional buy order: ", GetLastError());
+               }
+               else
+               {
+                   additionalTradesCount++;
+                   trailEntryPrice = price;
+                   Print("Placed Additional Buy Trade with count: ", additionalTradesCount, " with: EntryPrice: ",price, " and StopLoss: ", stopLoss);
+               }
+           }
+   
+           // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (TRADE_STOP_DISTANCE)
+           if (price == tradeStopPrice)
+           {
+               Print("Stop placing additional buy trades, final TRADE-STOP price reached.");
+           }
+   
+           // Check if the stop-loss is hit for any trade
+           if (price <= stopLoss)
            {
                CloseAllPositions(); // Close all positions if stop-loss is hit
            }
-        }
-        else {
-           if (bidOrAskPrice >= stopLoss)
+       }
+    }
+    else 
+    {
+       // Get the current price
+       price = SymbolInfoDouble(currentSymbol, SYMBOL_BID);  // Get BID/ASK price based on order type
+   
+       // Check if the price is within 2 tick (TRADE_DISTANCE) of the stop-loss
+       if (price > trailEntryPrice && startTrading)
+       {
+           double tradeStopPrice = NormalizeDouble(stopLoss - (TRADE_STOP_DISTANCE * Point()), Digits());
+           if (price < tradeStopPrice && additionalTradesCount < 30) // Limit to 30 trades for safety
+           {
+               // Place additional sell trade
+               if (trade.Sell(0.01, currentSymbol, price, stopLoss, 0, "Additional Sell Trade") == false)
+               {
+                   Print("Error opening additional sell order: ", GetLastError());
+               }
+               else
+               {
+                   additionalTradesCount++;
+                   trailEntryPrice = price;
+                   Print("Placed Additional Sell Trade with count: ", additionalTradesCount, " with: EntryPrice: ",price, " and StopLoss: ", stopLoss);
+               }
+           }
+   
+           // Stop placing additional trades once the price is 2 ticks away from the final stop-loss (TRADE_STOP_DISTANCE)
+           if (price == tradeStopPrice)
+           {
+               Print("Stop placing additional sell trades, final TRADE-STOP price reached.");
+           }
+   
+           // Check if the stop-loss is hit for any trade
+           if (price >= stopLoss)
            {
                CloseAllPositions(); // Close all positions if stop-loss is hit
            }
-        }
+       }
     }
 }
 
