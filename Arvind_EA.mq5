@@ -358,6 +358,7 @@ void MonitorPriceAndPlaceAdditionalTrades()
            // Check if the stop-loss is hit for any trade
            if (price <= stopLoss)
            {
+               Print("Stop loss activated, Closing all the positions.......");
                CloseAllPositions(); // Close all positions if stop-loss is hit
            }
        }
@@ -395,6 +396,7 @@ void MonitorPriceAndPlaceAdditionalTrades()
            // Check if the stop-loss is hit for any trade
            if (price >= stopLoss)
            {
+               Print("Stop loss activated, Closing all the positions.......");
                CloseAllPositions(); // Close all positions if stop-loss is hit
            }
        }
