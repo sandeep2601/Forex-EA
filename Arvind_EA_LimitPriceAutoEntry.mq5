@@ -28,6 +28,7 @@ int stopLossCandleIndex = 1;              // 1: Immediate previous candle, 2: Tw
 bool initialTradePlaced = false;
 bool startTrading = false;          // Flag to start trading
 bool buyTrade = true;               // Flag to set which trade is placed buy or sell
+bool isLotMultiplierEnable = true;  // Flag to enable or disable lot multiplier
 string currentSymbol;
 StopLossType stopLossOHLCOption = HighPrice;  // Stop-loss calculation type
 CTrade trade;                       // Declare the trade object for managing orders
@@ -47,6 +48,9 @@ CLabel baseLotsLabel;               // Declare a label object
 CButton decreaseBaseLotSizeButton;  // Create a button object
 CEdit baseLotSizeInput;             // Text input for lot size
 CButton increaseBaseLotSizeButton;  // Create a button object
+CLabel lotMultiplierLabel;          // Declare a label object
+CButton lotMultiplierOnButton;      // Create a button object
+CButton lotMultiplierOffButton;     // Create a button object
 
 
 //+------------------------------------------------------------------+
@@ -159,6 +163,24 @@ void HandleUIGraphics()
     increaseBaseLotSizeButton.Create(0, "IncreaseBaseLotSizeButton", 0, 290, 290, 340, 260); // x1, y2, x2, y1
     increaseBaseLotSizeButton.Text("▲");
     increaseBaseLotSizeButton.ColorBackground(clrLightGreen);
+  
+  
+    // Create a label on the chart
+    lotMultiplierLabel.Create(0, "LotMultiplierLabel", 0, 20, 310, 100, 280);     // x1, y2, x2, y1
+    lotMultiplierLabel.Text("Lot Multiply:");                                       // Set the label text
+    lotMultiplierLabel.Color(clrBlack);                                        // Set the label text color
+    lotMultiplierLabel.FontSize(10);                                           // Set the font size
+    lotMultiplierLabel.Font("Arial"); 
+
+    // Create button on chart
+    lotMultiplierOnButton.Create(0, "LotMultiplierOnButton", 0, 110, 340, 160, 310); // x1, y2, x2, y1
+    lotMultiplierOnButton.Text("ON");
+    lotMultiplierOnButton.ColorBackground(clrGreen);
+    
+    // Create button on chart
+    lotMultiplierOffButton.Create(0, "LotMultiplierOffButton", 0, 170, 340, 220, 310); // x1, y2, x2, y1
+    lotMultiplierOffButton.Text("OFF");
+    lotMultiplierOffButton.ColorBackground(clrRed);
 }
 
 // OnChartEvent handler to catch button clicks
@@ -246,6 +268,26 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
                Print("Base lot size increased to: ", baseLotSize);
             }
         }
+        else if (sparam == "LotMultiplierOnButton")
+        {
+            if (isLotMultiplierEnable == false)
+            {
+               isLotMultiplierEnable = true;
+               lotMultiplierOffButton.ColorBackground(clrRed);
+               lotMultiplierOnButton.ColorBackground(clrGreen);
+               Print("Lot Multiply is : Enabled");
+            }
+        }
+        else if (sparam == "LotMultiplierOffButton")
+        {
+            if (isLotMultiplierEnable == true)
+            {
+               isLotMultiplierEnable = false;
+               lotMultiplierOffButton.ColorBackground(clrGreen);
+               lotMultiplierOnButton.ColorBackground(clrRed);
+               Print("Lot Multiply is : Disabled");
+            }
+        }
     }
 }
 
@@ -330,9 +372,12 @@ void SetStopLossTakeProfitEntryPrice()
            Print("For loop => Entry Price: ", startTradePrice);
            PlaceBuyLimitTrade(startTradePrice, variableLotSize);
            startTradePrice = NormalizeDouble(startTradePrice - Point(), Digits());
-           noOfOrders = noOfOrders + 1;
-           if (noOfOrders == 7 || noOfOrders == 11) {
-              variableLotSize = NormalizeDouble(variableLotSize + 0.01, 2);
+           
+           if (isLotMultiplierEnable) {
+              noOfOrders = noOfOrders + 1;
+              if (noOfOrders == 7 || noOfOrders == 11) {
+                 variableLotSize = NormalizeDouble(variableLotSize + 0.01, 2);
+              }
            }
        }
        Print("startTradePrice: ", startTradePrice, " and stopTradePrice: ", stopTradePrice);
@@ -379,9 +424,12 @@ void SetStopLossTakeProfitEntryPrice()
            Print("For loop => Entry Price: ", startTradePrice);
            PlaceSellLimitTrade(startTradePrice, variableLotSize);
            startTradePrice = NormalizeDouble(startTradePrice + Point(), Digits());
-           noOfOrders = noOfOrders + 1;
-           if (noOfOrders == 7 || noOfOrders == 11) {
-              variableLotSize = NormalizeDouble(variableLotSize + 0.01, 2);
+           
+           if (isLotMultiplierEnable) {
+              noOfOrders = noOfOrders + 1;
+              if (noOfOrders == 7 || noOfOrders == 11) {
+                 variableLotSize = NormalizeDouble(variableLotSize + 0.01, 2);
+              }
            }
        }
        Print("startTradePrice: ", startTradePrice, " and stopTradePrice: ", stopTradePrice);
