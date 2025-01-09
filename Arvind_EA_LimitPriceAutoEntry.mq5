@@ -23,7 +23,6 @@ double startTradePrice = 0;
 double stopTradePrice = 0;
 double trailEntryPrice = 0;
 double baseLotSize = 0.01;
-int additionalTradesCount = 0;
 int stopLossCandleIndex = 1;              // 1: Immediate previous candle, 2: Two candles back
 bool initialTradePlaced = false;
 bool startTrading = false;          // Flag to start trading
@@ -36,6 +35,7 @@ CButton startButton;                // Create a button object
 CButton buyButton;                  // Create a button object
 CButton sellButton;                 // Create a button object
 CButton closePositionsButton;       // Create a button object
+CButton closePendingOrdersButton;   // Create a button object
 CLabel slCandleLabel;               // Declare a label object
 CButton immediatePreviousSLCandle;  // Create a button object
 CButton farPreviousSLCandle;        // Create a button object
@@ -91,9 +91,14 @@ void HandleUIGraphics()
     sellButton.ColorBackground(clrLightSalmon);
     
     // Create button on chart to trigger close all positions
-    closePositionsButton.Create(0, "CloseAllPositions", 0, 170, 140, 340, 110); // x1, y2, x2, y1
-    closePositionsButton.Text("Close All Positions");
+    closePositionsButton.Create(0, "CloseAllPositions", 0, 160, 140, 240, 110); // x1, y2, x2, y1
+    closePositionsButton.Text("Positions");
     closePositionsButton.ColorBackground(clrLightSlateGray);
+    
+    // Create button on chart to trigger close all positions
+    closePendingOrdersButton.Create(0, "ClosePendingOrders", 0, 250, 140, 340, 110); // x1, y2, x2, y1
+    closePendingOrdersButton.Text("P. Orders");
+    closePendingOrdersButton.ColorBackground(clrLightSlateGray);
     
     // Create a label on the chart
     slCandleLabel.Create(0, "SLCandleLabel", 0, 20, 160, 100, 130);       // x1, y2, x2, y1
@@ -210,6 +215,10 @@ void OnChartEvent(const int id, const long& lparam, const double& dparam, const 
         {
             CloseAllPositions(); // Close all positions for the current symbol
         }
+        else if (sparam == "ClosePendingOrders")
+        {
+            CloseAllPendingOrders(); // Close all pending orders for the current symbol
+        }
         else if (sparam == "ImmediatePreviousSLCandle")
         {
             stopLossCandleIndex = 1;
@@ -318,9 +327,9 @@ void OnLowButtonClicked()
 void OnTick()
 {
     // Only execute trading logic if the user has initiated the trade
-    if (startTrading)
-    {         
-    }
+    //if (startTrading)
+    //{         
+    //}
     
     // Testing the Prices
     // Print("1. LTP: ", SYMBOL_LAST, " , BID: ", SYMBOL_BID, " , ASK: ", SYMBOL_ASK);
@@ -494,10 +503,7 @@ void CloseAllPositions()
     }
     
     CloseAllPendingOrders();
-    
-    startTrading = false;        // Reset Flag
-    additionalTradesCount = 0;   // Reset additional trades count
-    stopLoss = 0;
+    //startTrading = false;        // Reset Flag
 }
 
 void CloseAllPendingOrders()
@@ -507,7 +513,6 @@ void CloseAllPendingOrders()
     Print("Total pending orders to be closed: ", totalOrders);
     for (int i = totalOrders - 1; i >= 0; i--)
     {
-        Print("Selecting order no. : ", i);
         ulong orderTicket = OrderGetTicket(i);
         //ENUM_ORDER_TYPE orderType = (ENUM_ORDER_TYPE)OrderGetInteger(ORDER_TYPE);  // Get order type
 
@@ -516,11 +521,11 @@ void CloseAllPendingOrders()
         //    orderType == ORDER_TYPE_BUY_STOP || orderType == ORDER_TYPE_SELL_STOP)
         if (!trade.OrderDelete(orderTicket))
         {
-            Print("Error deleting pending order: ", GetLastError());
+            Print("Error deleting pending order no: ", totalOrders - i, " Error: ", GetLastError());
         }
         else
         {
-            Print("Pending order ", i + 1, " deleted successfully.");
+            Print("Pending order no: ", totalOrders - i, " deleted successfully.");
         }
     }
 }
