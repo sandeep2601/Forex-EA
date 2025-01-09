@@ -97,7 +97,7 @@ void HandleUIGraphics()
     
     // Create button on chart to trigger close all positions
     closePendingOrdersButton.Create(0, "ClosePendingOrders", 0, 250, 140, 340, 110); // x1, y2, x2, y1
-    closePendingOrdersButton.Text("P. Orders");
+    closePendingOrdersButton.Text("Pen Orders");
     closePendingOrdersButton.ColorBackground(clrLightSlateGray);
     
     // Create a label on the chart
