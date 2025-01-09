@@ -373,9 +373,13 @@ void SetStopLossTakeProfitEntryPrice()
            PlaceBuyLimitTrade(startTradePrice, variableLotSize);
            startTradePrice = NormalizeDouble(startTradePrice - Point(), Digits());
            
-           if (isLotMultiplierEnable) {
+           // Update lot size if multiplier is enabled
+           if (isLotMultiplierEnable)
+           {
               noOfOrders = noOfOrders + 1;
-              if (noOfOrders == 7 || noOfOrders == 11) {
+              noOfOrders++;
+              if (noOfOrders == 7 || noOfOrders == 11)
+              {
                  variableLotSize = NormalizeDouble(variableLotSize + 0.01, 2);
               }
            }
@@ -425,9 +429,13 @@ void SetStopLossTakeProfitEntryPrice()
            PlaceSellLimitTrade(startTradePrice, variableLotSize);
            startTradePrice = NormalizeDouble(startTradePrice + Point(), Digits());
            
-           if (isLotMultiplierEnable) {
+           // Update lot size if multiplier is enabled
+           if (isLotMultiplierEnable)
+           {
               noOfOrders = noOfOrders + 1;
-              if (noOfOrders == 7 || noOfOrders == 11) {
+              noOfOrders++;
+              if (noOfOrders == 7 || noOfOrders == 11)
+              {
                  variableLotSize = NormalizeDouble(variableLotSize + 0.01, 2);
               }
            }
