@@ -1,0 +1,541 @@
+{
+  "acceptanceIsMetrics": [
+    {
+      "metricType": 8,
+      "metricValue": 0
+    }
+  ],
+  "acceptanceMetrics": [
+    {
+      "metricType": 8,
+      "metricValue": 50000
+    },
+    {
+      "metricType": 7,
+      "metricValue": 100
+    }
+  ],
+  "acceptanceOosMetrics": [
+    {
+      "metricType": 8,
+      "metricValue": 0
+    }
+  ],
+  "collectionSettings": {
+    "correlationThreshold": 0.98,
+    "filteringMetrics": [
+      {
+        "metricType": 8,
+        "metricValue": 60000
+      },
+      {
+        "metricType": 3,
+        "metricValue": 15
+      }
+    ],
+    "isDetectBalanceCorrelation": true,
+    "isDetectSimilarTradingRules": true,
+    "isResolveCorrelationsAutomatically": true,
+    "isUseRecordsFilters": true,
+    "sortingCriteria": 0,
+    "sortingScope": 0
+  },
+  "generatorSettings": {
+    "dataId": {
+      "source": "Premium Data",
+      "symbol": "XAUUSD",
+      "period": 5
+    },
+    "entryLots": 1,
+    "tradeDirectionMode": 0,
+    "oppositeSignalMode": 0,
+    "oosPercent": 0,
+    "maxWorkingMinutes": 600,
+    "maxWorkingMinutesReactor": 30,
+    "stopLossUsage": 0,
+    "stopLossType": 3,
+    "stopLossRangeMin": 10,
+    "stopLossRangeMax": 100,
+    "takeProfitUsage": 1,
+    "takeProfitRangeMin": 10,
+    "takeProfitRangeMax": 500,
+    "searchBest": 7,
+    "entryIndicatorsList": [
+      "Accelerator Oscillator",
+      "ADX",
+      "Alligator",
+      "Average True Range",
+      "Awesome Oscillator",
+      "Bears Power",
+      "Bollinger Bands",
+      "Bulls Power",
+      "Candle Color",
+      "Commodity Channel Index",
+      "DeMarker",
+      "Directional Indicators",
+      "Envelopes",
+      "MACD",
+      "MACD Signal",
+      "Momentum",
+      "Moving Average",
+      "Moving Average of Oscillator",
+      "Moving Averages Crossover",
+      "Pin Bar",
+      "RSI",
+      "Standard Deviation",
+      "Stochastic",
+      "Stochastic Signal",
+      "Williams' Percent Range"
+    ],
+    "exitIndicatorsList": [
+      "Accelerator Oscillator",
+      "ADX",
+      "Alligator",
+      "Average True Range",
+      "Awesome Oscillator",
+      "Bears Power",
+      "Bollinger Bands",
+      "Bulls Power",
+      "Candle Color",
+      "Commodity Channel Index",
+      "DeMarker",
+      "Directional Indicators",
+      "Envelopes",
+      "MACD",
+      "MACD Signal",
+      "Momentum",
+      "Moving Average",
+      "Moving Average of Oscillator",
+      "Moving Averages Crossover",
+      "Pin Bar",
+      "RSI",
+      "Standard Deviation",
+      "Stochastic",
+      "Stochastic Signal",
+      "Williams' Percent Range"
+    ],
+    "presetEntryRulesDto": [],
+    "presetExitRulesDto": [],
+    "isUsePresetIndicators": false,
+    "isFulfilCriteria": true,
+    "maxEntryRules": 4,
+    "maxExitRules": 2
+  },
+  "monteCarloSettings": {
+    "randomizeHistoryData": true,
+    "randomizeSpread": true,
+    "skipPositionEntries": true,
+    "skipPositionExits": true,
+    "randomlyClosePositions": false,
+    "randomizeSlippage": true,
+    "randomizeIndicatorParameters": false,
+    "randomizeFirstBar": false,
+    "numberOfTests": 20,
+    "changedBarsPercent": 20,
+    "dataMaxChangeAtrPercent": 20,
+    "spreadMin": 10,
+    "spreadMax": 30,
+    "skipEntriesProbability": 2,
+    "skipExitsProbability": 2,
+    "closePositionsProbability": 2,
+    "indParamsChangeProbability": 20,
+    "indParamsMaxChangePercent": 20,
+    "indParamsMinDeltaSteps": 20,
+    "slippageMin": 0,
+    "slippageMax": 20,
+    "validationSettings": [
+      {
+        "metricType": 8,
+        "metricValue": 10
+      },
+      {
+        "metricType": 7,
+        "metricValue": 100
+      }
+    ]
+  },
+  "multiMarketSettings": {
+    "marketsList": [],
+    "validationSettings": [
+      {
+        "metricType": 8,
+        "metricValue": 10
+      },
+      {
+        "metricType": 7,
+        "metricValue": 100
+      }
+    ]
+  },
+  "normalizerSettings": {
+    "removeTakeProfit": true,
+    "reduceStopLoss": true,
+    "reduceTakeProfit": true,
+    "removeIndicators": true,
+    "normalizeIndicatorParams": true,
+    "oosPercent": 0,
+    "countSteps": 20,
+    "searchBest": 0,
+    "normalizePresetIndicators": false,
+    "fulfillAcceptanceCriteria": true
+  },
+  "optimizerSettings": {
+    "oosPercent": 0,
+    "deltaSteps": 20,
+    "searchBest": 0,
+    "isOptimizeProtections": false,
+    "isOptimizePresetIndicators": false,
+    "isFulfilOwnCriteria": false,
+    "isFulfilCommonCriteria": true,
+    "isCollectStrategies": false,
+    "validationSettings": [
+      {
+        "metricType": 8,
+        "metricValue": 10
+      },
+      {
+        "metricType": 7,
+        "metricValue": 100
+      }
+    ],
+    "validationIsSettings": [
+      {
+        "metricType": 8,
+        "metricValue": 0
+      }
+    ],
+    "validationOosSettings": [
+      {
+        "metricType": 8,
+        "metricValue": 0
+      }
+    ]
+  },
+  "premiumDataSettings": {
+    "hiddenSymbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "BNBUSDT",
+      "LTCUSDT",
+      "ADAUSDT",
+      "XRPUSDT",
+      "XLMUSDT",
+      "TRXUSDT",
+      "ETCUSDT",
+      "VETUSDT",
+      "LINKUSDT",
+      "MATICUSDT",
+      "ATOMUSDT",
+      "ALGOUSDT",
+      "DOGEUSDT",
+      "HBARUSDT",
+      "FTTUSDT",
+      "SOLUSDT",
+      "DOTUSDT",
+      "LUNAUSDT",
+      "EGLDUSDT",
+      "UNIUSDT",
+      "AVAXUSDT",
+      "FILUSDT",
+      "SHIBUSDT",
+      "ICPUSDT"
+    ],
+    "timezoneIndex": "80000050"
+  },
+  "reactorSettings": {
+    "isAutomatedWorkflow": false,
+    "optimizerEnabled": false,
+    "optimizerOos": 0,
+    "optimizerDeltaSteps": 20,
+    "optimizerGoal": 0,
+    "optimizerOptimizeProtections": false,
+    "optimizerPresetIndicators": false,
+    "optimizerFulfilOwnCriteria": false,
+    "optimizerFulfilCriteria": true,
+    "wfOptimizationEnabled": false,
+    "wfOptimizationSegments": 5,
+    "wfOptimizationOos": 30,
+    "wfOptimizationDeltaSteps": 20,
+    "wfOptimizationGoal": 0,
+    "wfOptimizationOptimizeProtections": false,
+    "wfOptimizationPresetIndicators": false,
+    "wfOptimizationThreshold": 5,
+    "wfOptimizationFulfilCriteria": true,
+    "normalizerEnabled": false,
+    "normalizerSettings": {
+      "removeTakeProfit": true,
+      "reduceStopLoss": true,
+      "reduceTakeProfit": true,
+      "removeIndicators": true,
+      "normalizeIndicatorParams": true,
+      "oosPercent": 0,
+      "countSteps": 20,
+      "searchBest": 0,
+      "normalizePresetIndicators": false,
+      "fulfillAcceptanceCriteria": true
+    },
+    "walkForwardEnabled": false,
+    "walkForwardSegments": 5,
+    "walkForwardOos": 30,
+    "walkForwardDeltaSteps": 20,
+    "walkForwardGoal": 0,
+    "walkForwardOptimizeProtections": false,
+    "walkForwardPresetIndicators": false,
+    "walkForwardThreshold": 5,
+    "monteCarloEnabled": true,
+    "monteCarloTests": 20,
+    "monteCarloThreshold": 80,
+    "multiMarketEnabled": false,
+    "multiMarketThreshold": 0,
+    "multiMarketMarkets": []
+  },
+  "settings": {
+    "accountCurrency": "USD",
+    "dataId": {
+      "source": "OrbexGlobal-Server",
+      "symbol": "XAUUSD",
+      "period": 5
+    },
+    "initialAccount": 100000,
+    "language": "en",
+    "theme": "light",
+    "isLanguageCustomized": false,
+    "isThemeCustomized": false,
+    "legalAccepted": true,
+    "leverage": 100,
+    "isUseDataLength": false,
+    "dataLengthValue": 5,
+    "dataLengthUnit": 365,
+    "isUseMaxDataBars": true,
+    "maxDataBars": 100000,
+    "isUseStartDate": true,
+    "dataStartDate": "2024-01-01",
+    "isUseEndDate": false,
+    "dataEndDate": "2025-12-31",
+    "isUseTimezone": false,
+    "timezoneIndex": "80000050",
+    "minDataBars": 300,
+    "sessionHours": [
+      0,
+      86400000,
+      0,
+      86400000,
+      0,
+      86400000
+    ],
+    "sessionIgnoreSunday": true,
+    "sessionCloseAtSessionClose": false,
+    "sessionCloseAtFriday": true,
+    "closeAtBacktestEnd": true,
+    "collectionCapacity": 100,
+    "backtestOutputMetrics": [
+      "profit",
+      "maxConsecutiveLosses",
+      "maxDrawdownPercent",
+      "profitFactor",
+      "maxDailyLossPercent"
+    ],
+    "randomizeMaMethods": false,
+    "randomizeMaShift": false,
+    "maxIndicatorPeriod": 50,
+    "useDynamicSpread": true
+  },
+  "symbolSettings": {
+    "Premium Data; EURUSD": {
+      "useCustom": false,
+      "server": "Premium Data",
+      "symbol": "EURUSD",
+      "digits": 5,
+      "spread": 10,
+      "swapType": 0,
+      "swapMode": 0,
+      "swapThreeDays": 3,
+      "swapLong": -21.08,
+      "swapShort": 13.08,
+      "commissionType": 0,
+      "commission": 6,
+      "lotSize": 100000,
+      "pointValue": 1
+    },
+    "BlackBull; EURUSD": {
+      "useCustom": false,
+      "server": "BlackBull",
+      "symbol": "EURUSD",
+      "digits": 5,
+      "spread": 20,
+      "swapType": 0,
+      "swapMode": 1,
+      "swapThreeDays": 3,
+      "swapLong": -8,
+      "swapShort": 1.28,
+      "commissionType": 0,
+      "commission": 6,
+      "lotSize": 100000,
+      "pointValue": 1
+    },
+    "Exness-MT5Trial8; EURUSD": {
+      "useCustom": true,
+      "server": "Exness-MT5Trial8",
+      "symbol": "EURUSD",
+      "digits": 5,
+      "spread": 0,
+      "swapType": 0,
+      "swapMode": 1,
+      "swapThreeDays": 3,
+      "swapLong": -5.9,
+      "swapShort": 0,
+      "commissionType": 1,
+      "commission": 2,
+      "lotSize": 100000,
+      "pointValue": 1
+    },
+    "Exness-MT5Trial8; GBPUSD": {
+      "useCustom": true,
+      "server": "Exness-MT5Trial8",
+      "symbol": "GBPUSD",
+      "digits": 5,
+      "spread": 0,
+      "swapType": 0,
+      "swapMode": 1,
+      "swapThreeDays": 3,
+      "swapLong": -0.6,
+      "swapShort": -2.4,
+      "commissionType": 1,
+      "commission": 2,
+      "lotSize": 100000,
+      "pointValue": 1
+    },
+    "Exness-MT5Trial8; XAUUSD": {
+      "useCustom": true,
+      "server": "Exness-MT5Trial8",
+      "symbol": "XAUUSD",
+      "digits": 3,
+      "spread": 0,
+      "swapType": 0,
+      "swapMode": 1,
+      "swapThreeDays": 3,
+      "swapLong": -106.3,
+      "swapShort": 0,
+      "commissionType": 1,
+      "commission": 1,
+      "lotSize": 100,
+      "pointValue": 1
+    },
+    "OrbexGlobal-Server; GBPUSD": {
+      "useCustom": true,
+      "server": "OrbexGlobal-Server",
+      "symbol": "GBPUSD",
+      "digits": 5,
+      "spread": 10,
+      "swapType": 0,
+      "swapMode": 1,
+      "swapThreeDays": 3,
+      "swapLong": -1.827,
+      "swapShort": -4.569,
+      "commissionType": 1,
+      "commission": 1,
+      "lotSize": 100000,
+      "pointValue": 1
+    },
+    "OrbexGlobal-Server; USDJPY": {
+      "useCustom": false,
+      "server": "OrbexGlobal-Server",
+      "symbol": "USDJPY",
+      "digits": 3,
+      "spread": 10,
+      "swapType": 0,
+      "swapMode": 1,
+      "swapThreeDays": 3,
+      "swapLong": 13.715,
+      "swapShort": -29.125,
+      "commissionType": 0,
+      "commission": 0,
+      "lotSize": 100000,
+      "pointValue": 1
+    },
+    "OrbexGlobal-Server; XAUUSD": {
+      "useCustom": true,
+      "server": "OrbexGlobal-Server",
+      "symbol": "XAUUSD",
+      "digits": 2,
+      "spread": 10,
+      "swapType": 0,
+      "swapMode": 1,
+      "swapThreeDays": 3,
+      "swapLong": 13.801,
+      "swapShort": -46.778,
+      "commissionType": 1,
+      "commission": 1,
+      "lotSize": 100,
+      "pointValue": 1
+    },
+    "OrbexGlobal-Server; BTCUSD": {
+      "useCustom": false,
+      "server": "OrbexGlobal-Server",
+      "symbol": "BTCUSD",
+      "digits": 2,
+      "spread": 1400,
+      "swapType": 0,
+      "swapMode": 1,
+      "swapThreeDays": 5,
+      "swapLong": -5102.554,
+      "swapShort": -5103.372,
+      "commissionType": 0,
+      "commission": 0,
+      "lotSize": 1,
+      "pointValue": 1
+    },
+    "OrbexGlobal-Server; EURUSD": {
+      "useCustom": false,
+      "server": "OrbexGlobal-Server",
+      "symbol": "EURUSD",
+      "digits": 5,
+      "spread": 10,
+      "swapType": 0,
+      "swapMode": 1,
+      "swapThreeDays": 3,
+      "swapLong": -7.697,
+      "swapShort": 1.539,
+      "commissionType": 0,
+      "commission": 0,
+      "lotSize": 100000,
+      "pointValue": 1
+    },
+    "Premium Data; XAUUSD": {
+      "useCustom": false,
+      "server": "Premium Data",
+      "symbol": "XAUUSD",
+      "digits": 3,
+      "spread": 290,
+      "swapType": 0,
+      "swapMode": 0,
+      "swapThreeDays": 3,
+      "swapLong": -1056.77,
+      "swapShort": 641.41,
+      "commissionType": 0,
+      "commission": 0,
+      "lotSize": 100,
+      "pointValue": 1
+    }
+  },
+  "walkForwardSettings": {
+    "segments": 5,
+    "oosPercent": 30,
+    "deltaSteps": 20,
+    "searchBest": 0,
+    "isOptimizeProtections": false,
+    "isOptimizePresetIndicators": false,
+    "validationIsSettings": [
+      {
+        "metricType": 8,
+        "metricValue": 0
+      }
+    ],
+    "validationOosSettings": [
+      {
+        "metricType": 8,
+        "metricValue": 0
+      }
+    ]
+  }
+}
