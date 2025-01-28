@@ -20,36 +20,36 @@
 #property strict
 
 static input string _Properties_ = "------"; // --- Expert Properties ---
-static input int    Magic_Number = 1239138099; // Magic number
+static input int    Magic_Number = 193923060; // Magic number
 static input double Entry_Amount =     1.00; // Entry lots
        input int    Stop_Loss    =        0; // Stop Loss   (pips)
        input int    Take_Profit  =        0; // Take Profit (pips)
 
 static input string ___0______   = "------"; // --- Bulls Power ---
-       input int    Ind0Param0   =       30; // Period
-       input double Ind0Param1   =   0.0000; // Level
+       input int    Ind0Param0   =       11; // Period
+       input double Ind0Param1   =  -0.0020; // Level
 
 static input string ___1______   = "------"; // --- Bears Power ---
-       input int    Ind1Param0   =       21; // Period
+       input int    Ind1Param0   =       11; // Period
        input double Ind1Param1   =  17.0000; // Level
 
 static input string ___2______   = "------"; // --- Pin Bar ---
-       input int    Ind2Param0   =        9; // Max body part %
-       input int    Ind2Param1   =       35; // Min wick part %
+       input int    Ind2Param0   =       12; // Max body part %
+       input int    Ind2Param1   =       34; // Min wick part %
 
 static input string Entry_prot__ = "------"; // --- Entry Protections ---
-static input int    Max_Spread   =        0; // Max spread (points)
+static input int    Max_Spread   =       20; // Max spread (points)
 static input int    Max_OpenPos  =        1; // Max open positions (all experts)
 static input double Max_OpenLots =     0.00; // Max open lots (all experts)
 
 static input string Daily_prot__ = "------"; // --- Daily Protections ---
 static input int    MaxDailyLoss =        0; // Maximum daily loss (currency)
-static input double Max_Daily_DD =     4.00; // Maximum daily drawdown %
+static input double Max_Daily_DD =     4.80; // Maximum daily drawdown %
 static input int    Daily_Reset  =        0; // Daily reset hour (terminal time)
 
 static input string Account_prot = "------"; // --- Account Protections ---
-static input int    Min_Equity   =        0; // Minimum equity (currency)
-static input double MaxEquity_DD =     0.00; // Maximum equity drawdown %
+static input int    Min_Equity   =    90005; // Minimum equity (currency)
+static input double MaxEquity_DD =    10.00; // Maximum equity drawdown %
 static input int    Max_Equity   =        0; // Maximum equity (currency)
 
 static input string _NewsFilter_ = "------"; // --- News Filter ---
@@ -59,7 +59,7 @@ enum NewsFilterPriority
    NewsFilter_HighOnly,     // High news filter
    NewsFilter_HighAndMedium // Medium and High news filter
   };
-static input NewsFilterPriority News_Priority = NewsFilter_Disabled;       // News priority
+static input NewsFilterPriority News_Priority = NewsFilter_HighOnly;       // News priority
 static input string News_Currencies   = "USD,EUR"; // News currencies
 static input int    News_BeforeMedium =  2; // Before Medium news (minutes)
 static input int    News_AfterMedium  =  2; // After Medium news (minutes)
@@ -89,7 +89,7 @@ const int  sessionMondayThursdayOpen  =     0; // 00:00
 const int  sessionMondayThursdayClose = 86400; // 24:00
 const int  sessionFridayOpen          =     0; // 00:00
 const int  sessionFridayClose         = 86400; // 24:00
-const bool sessionIgnoreSunday        = false;
+const bool sessionIgnoreSunday        = true;
 const bool sessionCloseAtSessionClose = false;
 const bool sessionCloseAtFridayClose  = true;
 
@@ -299,13 +299,13 @@ void UpdatePosition(void)
 //+------------------------------------------------------------------+
 void InitIndicators(void)
   {
-   // Bulls Power (30), Level: 0.0000
+   // Bulls Power (11), Level: -0.0020
    indHandlers[0][0][0] = iBullsPower(NULL, 0, Ind0Param0);
    if(Show_inds) ChartIndicatorAdd(0, 1, indHandlers[0][0][0]);
-   // Bears Power (21), Level: 17.0000
+   // Bears Power (11), Level: 17.0000
    indHandlers[0][1][0] = iBearsPower(NULL, 0, Ind1Param0);
    if(Show_inds) ChartIndicatorAdd(0, 2, indHandlers[0][1][0]);
-   // Pin Bar (9, 35)
+   // Pin Bar (12, 34)
    indHandlers[0][2][0] = -1;
    if(Show_inds) ChartIndicatorAdd(0, 0, indHandlers[0][2][0]);
   }
@@ -332,7 +332,7 @@ void RemoveIndicators(void)
 //+------------------------------------------------------------------+
 int GetEntrySignal(void)
   {
-   // Bulls Power (30), Level: 0.0000
+   // Bulls Power (11), Level: -0.0020
    double ind0buffer[]; CopyBuffer(indHandlers[0][0][0], 0, 1, 3, ind0buffer);
    double ind0val1  = ind0buffer[2];
    double ind0val2  = ind0buffer[1];
@@ -351,13 +351,13 @@ int GetEntrySignal(void)
 //+------------------------------------------------------------------+
 void ManageClose(void)
   {
-   // Bears Power (21), Level: 17.0000
+   // Bears Power (11), Level: 17.0000
    double ind1buffer[]; CopyBuffer(indHandlers[0][1][0], 0, 1, 3, ind1buffer);
    double ind1val1  = ind1buffer[2];
    bool   ind1long  = ind1val1 > Ind1Param1 + sigma;
    bool   ind1short = ind1val1 < -Ind1Param1 - sigma;
 
-   // Pin Bar (9, 35)
+   // Pin Bar (12, 34)
 
    bool ind2long  = false;
    bool ind2short = false;
@@ -1463,4 +1463,4 @@ void ParseNewsCurrenciesText(void)
   }
 //+------------------------------------------------------------------+
 /*STRATEGY MARKET OrbexGlobal-Server; XAUUSD; M5 */
-/*STRATEGY CODE {"properties":{"entryLots":1,"tradeDirectionMode":0,"oppositeEntrySignal":0,"stopLoss":0,"takeProfit":100,"useStopLoss":false,"useTakeProfit":false,"isTrailingStop":false},"openFilters":[{"name":"Bulls Power","listIndexes":[5,0,0,0,0],"numValues":[30,0,0,0,0,0]}],"closeFilters":[{"name":"Bears Power","listIndexes":[2,0,0,0,0],"numValues":[21,17,0,0,0,0]},{"name":"Pin Bar","listIndexes":[0,0,0,0,0],"numValues":[9,35,0,0,0,0]}]} */
+/*STRATEGY CODE {"properties":{"entryLots":1,"tradeDirectionMode":0,"oppositeEntrySignal":0,"stopLoss":0,"takeProfit":100,"useStopLoss":false,"useTakeProfit":false,"isTrailingStop":false},"openFilters":[{"name":"Bulls Power","listIndexes":[5,0,0,0,0],"numValues":[11,-0.002,0,0,0,0]}],"closeFilters":[{"name":"Bears Power","listIndexes":[2,0,0,0,0],"numValues":[11,17,0,0,0,0]},{"name":"Pin Bar","listIndexes":[0,0,0,0,0],"numValues":[12,34,0,0,0,0]}]} */
